@@ -36,4 +36,17 @@ class ProductController extends AbstractController
             'products' => $products
         ]);
     }
+
+    /**
+     * @Route("/{id}", name="product_detail",requirements={"id"="\d+"})
+     */
+    public function showAction(Product $p, CategoryRepository $repo, $id): Response
+    {
+        // $p = $repo->findbrand($id);
+        $br = $repo->findAll();
+        return $this->render('product/detail.html.twig', [
+            'p' => $p,
+            'brand' => $br
+        ]);
+    }
 }
