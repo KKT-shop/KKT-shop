@@ -49,4 +49,29 @@ class ProductController extends AbstractController
             'brand' => $br
         ]);
     }
+
+    //ADD
+    /**
+     * @Route("/addproduct", name="product_create")
+     */
+    public function createAction(Request $req, SluggerInterface $slugger): Response
+    {
+
+        $p = new Product();
+        $form = $this->createForm(ProductType::class, $p);
+
+        $form->handleRequest($req);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $imgFile = $form->get('file')->getData();
+            if ($imgFile) {
+                $newFilename = $this->uploadImage($imgFile, $slugger);
+                $p->setImage($newFilename);
+            }
+            $this->repo->add($p, true);
+            return $this->redirectToRoute('product_show', [], Response::HTTP_SEE_OTHER);
+        }
+        return $this->render("product/form.html.twig", [
+            'form' => $form->createView()
+        ]);
+    }
 }
