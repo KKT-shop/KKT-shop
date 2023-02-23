@@ -74,4 +74,47 @@ class ProductController extends AbstractController
             'form' => $form->createView()
         ]);
     }
+
+    //EDIT
+    /**
+     * @Route("/edit/{id}", name="product_edit",requirements={"id"="\d+"})
+     */
+    public function editAction(
+        Request $req,
+        Product $p,
+        SluggerInterface $slugger
+    ): Response {
+
+        $form = $this->createForm(ProductType::class, $p);
+
+        $form->handleRequest($req);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $imgFile = $form->get('file')->getData();
+            if ($imgFile) {
+                $newFilename = $this->uploadImage($imgFile, $slugger);
+                $p->setImage($newFilename);
+            }
+            $this->repo->add($p, true);
+            return $this->redirectToRoute('product_show', [], Response::HTTP_SEE_OTHER);
+        }
+        return $this->render("product/form.html.twig", [
+            'form' => $form->createView()
+        ]);
+    }
+
+    public function uploadImage($imgFile, SluggerInterface $slugger): ?string
+    {
+        $originalFilename = pathinfo($imgFile->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $slugger->slug($originalFilename);
+        $newFilename = $safeFilename . '-' . uniqid() . '.' . $imgFile->guessExtension();
+        try {
+            $imgFile->move(
+                $this->getParameter('image_dir'),
+                $newFilename
+            );
+        } catch (FileException $e) {
+            echo $e;
+        }
+        return $newFilename;
+    }
 }
